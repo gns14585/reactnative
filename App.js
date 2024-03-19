@@ -16,28 +16,33 @@ import {SwipeListView} from 'react-native-swipe-list-view';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
 // 목데이터
-const DATA = [
-  {timestamp: Date.now(), text: 'Sample Text', checked: false},
-  {timestamp: Date.now(), text: 'Sample Text2', checked: false},
-];
+const DATA = [{timestamp: Date.now(), text: 'Sample Text', checked: false}];
 
 function App() {
   const [text, setText] = React.useState('');
   const [data, setData] = useState(DATA);
+  const [editingTimestamp, setEditingTimestamp] = useState(null);
 
+  // ------------------- 할일 내역 삭제 버튼 클릭시 실행 로직 -------------------
   const handleDelete = timestamp => {
     const res = data.filter(item => item.timestamp !== timestamp);
     setData([...res]);
   };
 
+  // ------------------- 할 일 추가 버튼 클릭시 실행 로직 -------------------
   const handleAdd = () => {
-    const res = {
-      timestamp: Date.now(),
+    const newTimestamp = Date.now();
+    const newItem = {
+      timestamp: newTimestamp,
       text: text,
+      checked: false,
     };
-    setData([...data, res]);
+    setData([...data, newItem]);
+    setText(''); // 텍스트 입력 필드를 비웁니다.
+    setEditingTimestamp(null); // 수정 중인 항목이 없도록 설정합니다.
   };
 
+  // ------------------- 오늘 할 일 체크 했을때 실행 로직 -------------------
   const handleCheck = timestamp => {
     const newData = data.map(item => {
       if (item.timestamp === timestamp) {
@@ -48,7 +53,22 @@ function App() {
     setData(newData);
   };
 
+  // ------------------- 할 일 수정버튼 클릭시 실행 로직 -------------------
+  const handleEdit = (timestamp, newText) => {
+    const newData = data.map(item => {
+      if (item.timestamp === timestamp) {
+        return {...item, text: newText};
+      }
+      return item;
+    });
+    setData(newData);
+    // Edit 모드 종료
+    setEditingTimestamp(null);
+  };
+
   const renderItem = ({item, index}) => {
+    const isEditing = editingTimestamp === item.timestamp;
+
     return (
       // wp, hp 를 사용하는 이유
       // 디바이스 화면크기에 대한 퍼센티지(%) 값을 기반으로 크기를 계산함
@@ -81,13 +101,24 @@ function App() {
             opacity: item.checked ? 1 : 0.2, // 체크 상태에 따라 불투명도를 변경합니다.
           }}
         />
-        <Text
-          style={{
-            width: wp(50),
-            textDecorationLine: item.checked ? 'line-through' : 'none',
-          }}>
-          {item.text}
-        </Text>
+        {isEditing ? (
+          <TextInput
+            value={text}
+            onChangeText={setText}
+            style={{width: wp(50), backgroundColor: 'white'}}
+            onSubmitEditing={() => handleEdit(item.timestamp, text)}
+            autoFocus
+          />
+        ) : (
+          <Text
+            style={{
+              width: wp(50),
+              textDecorationLine: item.checked ? 'line-through' : 'none',
+              opacity: item.checked ? 0.2 : 1,
+            }}>
+            {item.text}
+          </Text>
+        )}
       </View>
     );
   };
@@ -101,7 +132,7 @@ function App() {
           paddingHorizontal: wp(5),
           paddingVertical: hp(2),
         }}>
-        <Pressable onPress={null}>
+        <Pressable onPress={() => setEditingTimestamp(item.timestamp)}>
           <Text style={{fontSize: hp(3)}}>✍️</Text>
         </Pressable>
         <Pressable onPress={() => handleDelete(item.timestamp)}>
@@ -148,7 +179,7 @@ const styles = StyleSheet.create({
   },
   header: {
     width: wp(100),
-    height: hp(20),
+    height: hp(10),
     justifyContent: 'center',
     paddingLeft: wp(10),
   },
