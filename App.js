@@ -17,8 +17,8 @@ import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 
 // 목데이터
 const DATA = [
-  {timestamp: Date.now(), text: 'Sample Text'},
-  {timestamp: Date.now(), text: 'Sample Text2'},
+  {timestamp: Date.now(), text: 'Sample Text', checked: false},
+  {timestamp: Date.now(), text: 'Sample Text2', checked: false},
 ];
 
 function App() {
@@ -36,6 +36,16 @@ function App() {
       text: text,
     };
     setData([...data, res]);
+  };
+
+  const handleCheck = timestamp => {
+    const newData = data.map(item => {
+      if (item.timestamp === timestamp) {
+        return {...item, checked: !item.checked};
+      }
+      return item;
+    });
+    setData(newData);
   };
 
   const renderItem = ({item, index}) => {
@@ -58,27 +68,26 @@ function App() {
           marginBottom: hp(2),
           flexDirection: 'row',
           alignItems: 'center',
+          textDecorationLine: item.checked ? 'line-through' : 'none', // 이 부분을 추가하세요.
         }}>
-        <View
+        <Pressable
+          onPress={() => handleCheck(item.timestamp)}
           style={{
             width: hp(4),
             height: hp(4),
-            backgroundColor: '#8d71fe',
+            backgroundColor: item.checked ? '#8d71fe' : '#8d71fe', // 체크 상태에 따라 배경색을 변경합니다.
             borderRadius: 4,
             marginHorizontal: wp(5),
-            opacity: 0.4,
+            opacity: item.checked ? 1 : 0.2, // 체크 상태에 따라 불투명도를 변경합니다.
           }}
         />
-        <Text style={{width: wp(50)}}>{item.text}</Text>
-        <View
+        <Text
           style={{
-            width: hp(2),
-            height: hp(2),
-            backgroundColor: '#8d71fe',
-            borderRadius: 100,
-            marginHorizontal: wp(3),
-          }}
-        />
+            width: wp(50),
+            textDecorationLine: item.checked ? 'line-through' : 'none',
+          }}>
+          {item.text}
+        </Text>
       </View>
     );
   };
@@ -103,65 +112,32 @@ function App() {
   };
 
   return (
-    <View style={styles.container}>
-      {/* 키보드 올라오면 화면이 전체 위로 올라가도록 하는 태그 ( KeyboardAwareScrollView ) */}
-      <KeyboardAwareScrollView bounces={false}>
-        <View
-          style={{
-            width: wp(100),
-            height: hp(20),
-            justifyContent: 'center',
-            paddingLeft: wp(10),
-          }}>
-          <Text style={{fontSize: hp(3), fontWeight: 'bold'}}>
-            ✔ To do list
-          </Text>
-        </View>
-        <View
-          style={{
-            width: wp(100),
-            height: hp(70),
-          }}>
-          <SwipeListView
-            data={data}
-            renderItem={renderItem}
-            renderHiddenItem={renderHiddenItem}
-            leftOpenValue={wp(10)}
-            rightOpenValue={-wp(10)}
-          />
-        </View>
-        <View style={{width: wp(100), height: hp(10), flexDirection: 'row'}}>
-          <TextInput
-            value={text}
-            placeholder="please write the text."
-            placeholderTextColor="#aaa"
-            onChangeText={item => setText(item)}
-            style={{
-              width: wp(60),
-              marginLeft: wp(10),
-              backgroundColor: '#fff',
-              height: hp(5),
-              paddingLeft: wp(3),
-              borderRadius: 10,
-            }}
-          />
-          <Pressable
-            style={{
-              width: hp(5),
-              height: hp(5),
-              marginLeft: wp(10),
-              backgroundColor: '#fff',
-              justifyContent: 'center',
-              alignItems: 'center',
-              borderRadius: 100,
-            }}
-            onPress={handleAdd}>
-            <Text>➕</Text>
-          </Pressable>
-        </View>
-      </KeyboardAwareScrollView>
+    <KeyboardAvoidingView style={styles.container} behavior="padding">
       <StatusBar style={'auto'} />
-    </View>
+      <View style={styles.header}>
+        <Text style={styles.headerText}>✔ To do list</Text>
+      </View>
+      <SwipeListView
+        data={data}
+        renderItem={renderItem}
+        renderHiddenItem={renderHiddenItem}
+        leftOpenValue={wp(10)}
+        rightOpenValue={-wp(10)}
+        style={styles.listView}
+      />
+      <View style={styles.inputContainer}>
+        <TextInput
+          value={text}
+          placeholder="please write the text."
+          placeholderTextColor="#aaa"
+          onChangeText={item => setText(item)}
+          style={styles.input}
+        />
+        <Pressable style={styles.addButton} onPress={handleAdd}>
+          <Text>➕</Text>
+        </Pressable>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -169,6 +145,42 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#e8eaed',
+  },
+  header: {
+    width: wp(100),
+    height: hp(20),
+    justifyContent: 'center',
+    paddingLeft: wp(10),
+  },
+  headerText: {
+    fontSize: hp(3),
+    fontWeight: 'bold',
+  },
+  listView: {
+    flex: 1, // 이 부분은 `SwipeListView`가 사용할 수 있는 모든 공간을 차지하도록 합니다.
+  },
+  inputContainer: {
+    width: wp(100),
+    flexDirection: 'row',
+    paddingHorizontal: wp(10),
+    paddingBottom: hp(2),
+  },
+  input: {
+    flex: 1,
+    backgroundColor: 'white',
+    marginRight: wp(5),
+    borderRadius: 10,
+    paddingLeft: wp(3),
+    marginTop: 10,
+  },
+  addButton: {
+    width: hp(5),
+    height: hp(5),
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 100,
+    marginTop: 10,
   },
 });
 
